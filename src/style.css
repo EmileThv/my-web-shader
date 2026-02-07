@@ -1,0 +1,83 @@
+/* Resets everything */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* 2. Force the app to be exactly the size of the screen */
+body,
+html,
+#app {
+    width: 100vw;
+    /* vw = Viewport Width (100% of screen width) */
+    height: 100vh;
+    /* vh = Viewport Height (100% of screen height) */
+    overflow: hidden;
+    /* No scrolling allowed */
+    background-color: #a5a5a5;
+    /* Dark theme */
+}
+
+/* 3. The Layout Engine */
+#app {
+    display: flex;
+    /* This is the 'switch' that puts children side-by-side */
+    flex-direction: row;
+    /* Standard left-to-right */
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 5px;
+    gap: 5px;
+}
+
+/* 4. The Two Halves */
+#editor-container {
+    flex: 1;
+    /* This means "Take up 50% each". If one was 2 and the other 1, it would be 66%/33% */
+    height: 100%;
+    border-radius: 12px;
+    border: 1px solid #444;
+    background-color: #1e1e1e;
+    min-width: 0;
+    max-width: 50%;
+    overflow: hidden;
+}
+
+#render-container {
+    flex: 1;
+    /* This means "Take up 50% each". If one was 2 and the other 1, it would be 66%/33% */
+    height: 100%;
+    border: 1px solid #444;
+    background-color: #1e1e1e;
+    min-width: 0;
+    max-width: 50%;
+    overflow: hidden;
+}
+
+/* 5. Make the Canvas fill its half perfectly */
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    /* Removes a tiny 4px gap at the bottom of images */
+}
+
+/* 6. CodeMirror specific (Internal styling) */
+.cm-editor {
+    height: 100%;
+    /* Force the editor to be as tall as the screen */
+    font-family: 'Fira Code', monospace;
+    width: 100%;
+    color: #f8ddff;
+}
+
+.cm-scroller {
+    overflow: auto;
+}
