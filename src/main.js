@@ -44,14 +44,18 @@ uniform float u_time;
 uniform vec2 u_resolution;
 
 void main() {
-    // Fix aspect ratio and center at 0,0
     vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.y, u_resolution.x);
-    
-    float pulse = abs(sin(u_time * 0.1)) * 0.5;
-    float d = distance(uv, vec2(0.0));
-    vec3 color = vec3(0.5 / d) * pulse;
-    
-    gl_FragColor = vec4(color, 1.0);
+
+    for(float i = 1.0; i < 10.0; i++){
+        uv.x += 0.6 / i * cos(i * uv.y + u_time*.1 + i);
+        uv.y += 0.6 / i * tan(i * uv.x + u_time*.1 + i);
+    }
+
+    vec3 color = vec3(0.5 + 0.5 * sin(u_time*.1 + uv.x), 
+                      0.5 + 0.5 * cos(u_time*.1+ uv.y), 
+                      0.8);
+
+    gl_FragColor = vec4(color / length(uv), 1.0);
 }`;
 
 // make a material out of the shader
