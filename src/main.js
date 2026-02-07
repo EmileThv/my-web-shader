@@ -45,7 +45,7 @@ uniform vec2 u_resolution;
 
 void main() {
     vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.y, u_resolution.x);
-
+    /* This might be a bit hard on the eyes i just thought it looked good*/
     for(float i = 1.0; i < 10.0; i++){
         uv.x += 0.6 / i * cos(i * uv.y + u_time*.1 + i);
         uv.y += 0.6 / i * tan(i * uv.x + u_time*.1 + i);
@@ -72,25 +72,47 @@ scene.add(mesh);
 //3. Codemirror (IDE) set up
 // this was made by gemini so might be not so good
 const editor = new EditorView({
-  doc: initialFragmentShader, // Load the shader string we defined above
+  doc: initialFragmentShader,
   extensions: [
     basicSetup,
-    cpp(), // Syntax highlighting
+    cpp(),
+    EditorView.theme({
+      "&": {
+        height: "100%",
+        width: "100%",
+        backgroundColor: "#1e1e1e", 
+        color: "#f8ddff",           
+        fontFamily: "'Fira Code', monospace"
+      },
+      ".cm-scroller": {
+        overflow: "auto"
+      },
+      ".cm-content": {
+        caretColor: "#f8ddff",
+        padding: "10px 0"
+      },
+      ".cm-cursor, .cm-dropCursor": {
+        borderLeftColor: "#f8ddff"
+      },
+      "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+        backgroundColor: "#444"
+      },
+      ".cm-gutters": {
+        backgroundColor: "#1e1e1e",
+        color: "#666",
+        border: "none"
+      }
+    }, { dark: true }),
+
     EditorView.updateListener.of((update) => {
-      // This runs every time you type a character
       if (update.docChanged) {
-        // 1. Get the new text
         const newShader = update.state.doc.toString();
-        
-        // 2. Send it to Three.js
         material.fragmentShader = newShader;
-        
-        // 3. Tell the GPU to re-compile
         material.needsUpdate = true;
       }
     })
   ],
-  parent: document.getElementById('editor-container') // Inject into HTML
+  parent: document.getElementById('editor-container')
 });
 
 //4. Render loop
