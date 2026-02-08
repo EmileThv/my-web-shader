@@ -41,9 +41,11 @@ const vertexShader = `
 const initialFragmentShader = `
 uniform float u_time;
 uniform vec2 u_resolution;
+uniform vec2 u_mouse;
 
 void main() {
     vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.y, u_resolution.x);
+    vec2 mouse = (u_mouse.xy * 2.0 - u_resolution.xy) / min(u_resolution.y, u_resolution.x);
 
     for(float i = 1.0; i < 10.0; i++){
         uv.x += 0.6 / i * cos(i * uv.y + u_time*.1 + i);
@@ -70,6 +72,7 @@ scene.add(mesh);
 
 //3. Codemirror (IDE) set up
 // this was made by gemini so might be not so good
+let debounceTimer;
 const editor = new EditorView({
   doc: initialFragmentShader,
   extensions: [
@@ -105,9 +108,15 @@ const editor = new EditorView({
 
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
-        const newShader = update.state.doc.toString();
-        material.fragmentShader = newShader;
-        material.needsUpdate = true;
+        errorOverlay.classList.remove('is-visible');
+        clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(() => {
+          const newShader = update.state.doc.toString();
+          material.fragmentShader = newShader;
+          material.needsUpdate = true;
+        },500)
+        
       }
     })
   ],
@@ -135,12 +144,28 @@ function handleResize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
     
-    // Update the renderer to the actual pixel size of the box
-    renderer.setSize(w, h, false); // 'false' prevents CSS scaling issues
+    renderer.setSize(w, h, true);
     
-    // Update the shader uniform
     uniforms.u_resolution.value.set(w, h);
 }
+
+// Track mouse movement
+window.addEventListener('mousemove', (event) => {
+    // Get the bounding rectangle of the canvas
+    const rect = canvas.getBoundingClientRect();
+
+    // Calculate position relative to the canvas (0 to width, 0 to height)
+    // We flip the Y coordinate because GLSL starts at the bottom-left
+    uniforms.u_mouse.value.x = event.clientX - rect.left;
+    uniforms.u_mouse.value.y = rect.height - (event.clientY - rect.top);
+});
+
+const errorOverlay = document.getElementById('shader-error-overlay');
+renderer.debug.onShaderError = (gl, program, glVertexShader, glFragmentShader) => {
+  const log = gl.getShaderInfoLog(glFragmentShader);
+  errorOverlay.innerText = log;
+  errorOverlay.classList.add('is-visible');
+};
 
 handleResize();
 
