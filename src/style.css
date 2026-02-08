@@ -5,24 +5,70 @@
 }
 
 body {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
     margin: 0;
     padding: 0;
+    overflow: hidden;
+    background-color: #a5a5a5;
 }
 
 body,
 html,
 #app {
-    width: 100vw;
-    /* vw = Viewport Width (100% of screen width) */
-    height: 100vh;
-    /* vh = Viewport Height (100% of screen height) */
     overflow: hidden;
-    /* No scrolling allowed */
-    background-color: #a5a5a5;
+}
+
+#titlebar{
+    display: flex;
+    flex-direction: row;
+}
+
+#logo{
+    flex:1;
+    height: 100%;
+    background-color: #252525;
+    border-bottom: 1px solid #444;
+    text-align: left;
+    padding: 10px 20px;
+    color: #f8ddff;
+    font-family: "Fira Code", monospace;
+    font-size: .8rem;
+    font-weight: lighter;
+    letter-spacing: 1px;
+}
+
+#title{
+    flex:1;
+    text-align: center;
+    padding: 10px 20px;
+    background-color: #252525;
+    color: #f8ddff;
+    font-family: "Fira Code", monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-bottom: 1px solid #444;
+    letter-spacing: 1px;
+}
+
+#credits{
+    flex:1;
+    text-align: right;
+    padding: 10px 20px;
+    background-color: #252525;
+    color: #f8ddff;
+    font-family: "Fira Code", monospace;
+    font-size: .7rem;
+    font-weight: lighter;
+    border-bottom: 1px solid #444;
+    letter-spacing: 2px;
 }
 
 #app {
     display: flex;
+    flex: 1;
     flex-direction: row;
     /* Standard left-to-right */
     width: 100%;
@@ -73,7 +119,7 @@ html,
 #render-container {
     flex: 1;
     height: 100%;
-    border: 1px solid #444;
+    border: 2px solid #444;
     background-color: #1e1e1e;
     min-width: 0;
     max-width: 50%;
@@ -86,4 +132,3 @@ canvas {
     display: block;
     /* Removes a tiny 4px gap at the bottom of images */
 }
-
