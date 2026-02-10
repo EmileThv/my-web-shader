@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { EditorView, basicSetup } from "codemirror";
 import { cpp } from "@codemirror/lang-cpp"; // C++ syntax is basically identical to GLSL
+import { syntaxHighlighting, HighlightStyle } from "@codemirror/language";
+import { tags as t } from "@lezer/highlight";
 
 //1. The engine 
 
@@ -20,7 +22,7 @@ const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
 const scene = new THREE.Scene();
 
-const geometry = new THREE.PlaneGeometry(2,2);
+const geometry = new THREE.PlaneGeometry(2, 2);
 
 //2. Data Bridge
 
@@ -37,29 +39,12 @@ const vertexShader = `
   }
 `;
 
-// classic default text
-const initialFragmentShader = `uniform float u_time;
-uniform vec2 u_resolution;
-uniform vec2 u_mouse;
 
-void main() {
-    /* Coordinates normalization */
-    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.y, u_resolution.x);
-    vec2 mouse = (u_mouse.xy * 2.0 - u_resolution.xy) / min(u_resolution.y, u_resolution.x);
-
-    for(float i = 1.0; i < 10.0; i++){
-        uv.x += 0.6 / i * cos(i * uv.y + u_time*.1 + i);
-        uv.y += 0.6 / i * clamp(tan(i * uv.x + u_time*.05 + i),-5.,5.);
-    }
-
-    vec3 color = vec3(0.5 + 0.5 * sin(u_time*.1 + uv.x), 
-                      0.5 + 0.5 * cos(u_time*.1+ uv.y), 
-                      0.8);
-
-    gl_FragColor = vec4(color / length(uv), 1.0);
-}`;
+// Load initial fragment shader from external file (Vite will inline as string)
+import initialFragmentShader from './assets/initial.frag?raw';
 
 // make a material out of the shader
+
 const material = new THREE.ShaderMaterial({
   uniforms: uniforms,
   vertexShader: vertexShader,
@@ -70,20 +55,34 @@ const material = new THREE.ShaderMaterial({
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
+
+
 //3. Codemirror (IDE) set up
-// this was made by gemini so might be not so good
+
+const highlightStyle = HighlightStyle.define([
+  { tag: t.keyword, color: "#ff7bca", fontWeight: "bold" },
+  { tag: t.meta, color: "#ff9d00" },
+  { tag: t.typeName, color: "#79c0ff" },
+  { tag: t.number, color: "#d2a8ff" },
+  { tag: t.comment, color: "#8b949e", fontStyle: "italic" },
+  { tag: t.variableName, color: "#f8ddff" },
+  { tag: t.function(t.variableName), color: "#79c0ff" }
+]);
+
+// this was made in part by gemini so might be not so good
 let debounceTimer;
 const editor = new EditorView({
   doc: initialFragmentShader,
   extensions: [
     basicSetup,
     cpp(),
+    syntaxHighlighting(highlightStyle),
     EditorView.theme({
       "&": {
         height: "100%",
         width: "100%",
-        backgroundColor: "#1e1e1e", 
-        color: "#f8ddff",           
+        backgroundColor: "#1e1e1e",
+        color: "#f8ddff",
         fontFamily: "'Fira Code', monospace"
       },
       ".cm-scroller": {
@@ -103,6 +102,25 @@ const editor = new EditorView({
         backgroundColor: "#1e1e1e",
         color: "#666",
         border: "none"
+      },
+      ".cm-meta": {
+        color: "#ff9d00 !important",
+        fontWeight: "bold"
+      },
+      ".cm-keyword": {
+        color: "#ff7bca !important",
+        textShadow: "0 0 5px rgba(255, 123, 202, 0.5)"
+      },
+
+      ".cm-type": {
+        color: "#79c0ff !important"
+      },
+      ".cm-number": {
+        color: "#d2a8ff !important"
+      },
+      ".cm-comment": {
+        color: "#8b949e !important",
+        fontStyle: "italic"
       }
     }, { dark: true }),
 
@@ -115,49 +133,70 @@ const editor = new EditorView({
           const newShader = update.state.doc.toString();
           material.fragmentShader = newShader;
           material.needsUpdate = true;
-        },500)
-        
+        }, 500)
+
       }
     })
   ],
   parent: document.getElementById('editor-container')
 });
 
+const saveBtn = document.getElementById('save-btn');
+
+saveBtn.addEventListener('click', () => {
+  const shaderCode = editor.state.doc.toString();
+  let fileName = prompt("Nom du shader :", "my_shader.frag");
+  if (fileName === null) return;
+  if (!fileName.endsWith('.frag')) {
+    fileName += '.frag';
+  }
+  const blob = new Blob([shaderCode], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
 //4. Render loop
 
 // animation loop
 function animate(time) {
-    // 'time' comes in seconds
-    uniforms.u_time.value = time * 0.01;
-    
-    // Draw the scene
-    renderer.render(scene, camera);
-    
-    // Loop
-    requestAnimationFrame(animate);
+  // 'time' comes in seconds
+  uniforms.u_time.value = time * 0.01;
+
+  // Draw the scene
+  renderer.render(scene, camera);
+
+  // Loop
+  requestAnimationFrame(animate);
 }
 
 // window resizing
 window.addEventListener('resize', handleResize);
 
 function handleResize() {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    
-    renderer.setSize(w, h, true);
-    
-    uniforms.u_resolution.value.set(w, h);
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+
+  renderer.setSize(w, h, true);
+
+  uniforms.u_resolution.value.set(w, h);
 }
 
 // Track mouse movement
 window.addEventListener('mousemove', (event) => {
-    // Get the bounding rectangle of the canvas
-    const rect = canvas.getBoundingClientRect();
+  // Get the bounding rectangle of the canvas
+  const rect = canvas.getBoundingClientRect();
 
-    // Calculate position relative to the canvas (0 to width, 0 to height)
-    // We flip the Y coordinate because GLSL starts at the bottom-left
-    uniforms.u_mouse.value.x = event.clientX - rect.left;
-    uniforms.u_mouse.value.y = rect.height - (event.clientY - rect.top);
+  // Calculate position relative to the canvas (0 to width, 0 to height)
+  // We flip the Y coordinate because GLSL starts at the bottom-left
+  uniforms.u_mouse.value.x = event.clientX - rect.left;
+  uniforms.u_mouse.value.y = rect.height - (event.clientY - rect.top);
 });
 
 const errorOverlay = document.getElementById('shader-error-overlay');
